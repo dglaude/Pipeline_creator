@@ -35,6 +35,7 @@ class LocalPackagesFinder:
 
         parts = fullname.split(".")
 
+        # Case 1: Top-level import (e.g. "pygrabber")
         if len(parts) == 1:
             search_paths = sys.path if path is None else path
             for entry in search_paths:
@@ -49,6 +50,7 @@ class LocalPackagesFinder:
                             spec.submodule_search_locations = [potential_dir]
                             return spec
 
+        # Case 2: Submodule import (e.g. "pygrabber.dshow_graph")
         else:
             submodule_name = parts[-1]
             if path:
@@ -687,8 +689,6 @@ def export_workspace(
     }
 
     if filepath:
-        if not filepath.lower().endswith(".json"):
-            filepath += ".json"
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
         logger.success(f"Workspace exported to {filepath}")
@@ -1040,6 +1040,15 @@ def apply_view_data(view_data: dict) -> None:
     # Step 2 – show and reposition only the listed windows
     load_positions_from_dict(view_data)
 
+    # Step 3 – apply Gate states if present in view
+    if "gates" in view_data:
+        try:
+            from core.main_win import main_win
+            if hasattr(main_win, "node_editor") and hasattr(main_win.node_editor, "set_gate_states"):
+                main_win.node_editor.set_gate_states(view_data["gates"])
+        except Exception as e:
+            logger.warning(f"apply_view_data: could not apply gate states: {e}")
+
 
 
 def register_views(views: Dict[str, Any], merge: bool = False) -> None:
@@ -1163,4 +1172,14 @@ def export_view(is_relative: bool = True) -> dict:
 
         windows.append(entry)
 
-    return {"is_relative": is_relative, "windows": windows}
+    view_dict: Dict[str, Any] = {"is_relative": is_relative, "windows": windows}
+    try:
+        from core.main_win import main_win
+        if hasattr(main_win, "node_editor") and hasattr(main_win.node_editor, "get_gate_states"):
+            gates = main_win.node_editor.get_gate_states()
+            if gates:
+                view_dict["gates"] = gates
+    except Exception as e:
+        logger.debug(f"export_view: could not retrieve gate states: {e}")
+
+    return view_dict

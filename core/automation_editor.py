@@ -33,6 +33,7 @@ AVAILABLE_ACTIONS: List[Tuple[str, str, str]] = [
     ("wait", "Wait / Delay", "Pause execution for specified duration (seconds)"),
 ]
 
+
 class AutomationEditor:
     """
     Interactive GUI editor and manager for automation scripts.
@@ -73,7 +74,10 @@ class AutomationEditor:
         self.current_filepath = None
         self.script_data = {
             "name": "Untitled Automation",
-            "steps": [],
+            "steps": [
+                {"action": "fullscreen", "enabled": True},
+                {"action": "load_pipeline", "path": "/layouts/Radial_Counter.json"},
+            ],
         }
         self.selected_step_idx = 0
 
@@ -113,9 +117,6 @@ class AutomationEditor:
             if not target:
                 return False
 
-        if not target.lower().endswith(".json"):
-            target += ".json"
-
         try:
             with open(target, "w", encoding="utf-8") as f:
                 json.dump(self.script_data, f, indent=4)
@@ -125,6 +126,10 @@ class AutomationEditor:
         except Exception as e:
             logger.error(f"Failed to save automation script to '{target}': {e}")
             return False
+
+    # ------------------------------------------------------------------
+    # Pipeline Context (Layout module & view discovery)
+    # ------------------------------------------------------------------
 
     def _get_pipeline_context(self) -> Dict[str, Any]:
         """Find the most relevant layout loaded in this script and extract its modules and views."""
@@ -211,6 +216,10 @@ class AutomationEditor:
         self._populate_steps_list()
         self._populate_step_details()
 
+    # ------------------------------------------------------------------
+    # UI Construction
+    # ------------------------------------------------------------------
+
     def _build_ui(self, active_tab: Optional[str] = None) -> None:
         """Create or recreate the Automation Editor window."""
         if active_tab:
@@ -259,7 +268,7 @@ class AutomationEditor:
         if self.active_tab and dpg.does_item_exist(self.active_tab):
             dpg.set_value(f"{self.winID}_tabs", self.active_tab)
 
-    def _on_tab_changed(self, sender: Any, app_data: Any, user_data: Any) -> None:
+    def _on_tab_changed(self, sender: Any, app_data: Any, user_data: Any, *args, **kwargs) -> None:
         self.active_tab = app_data
         if app_data == f"{self.winID}_tab_json":
             self._sync_to_raw_json()
@@ -324,6 +333,10 @@ class AutomationEditor:
             )
             with dpg.tooltip(parent=dpg.last_item()):
                 dpg.add_text("Execute all steps of this automation script immediately.")
+
+    # ------------------------------------------------------------------
+    # TAB 1: Steps Flow
+    # ------------------------------------------------------------------
 
     def _build_steps_tab(self) -> None:
         """Visual sequence of automation steps on the left, step detail inspector on the right."""
@@ -473,6 +486,9 @@ class AutomationEditor:
             dpg.add_separator()
             dpg.add_spacer(height=s(4))
 
+            # ------------------------------------------------------------------
+            # Dynamic Fields based on Action Type
+            # ------------------------------------------------------------------
             if action == "fullscreen":
                 dpg.add_checkbox(
                     label="Maximize Viewport (Fullscreen)",
@@ -659,6 +675,10 @@ class AutomationEditor:
                         callback=lambda s, a, u, *args: (step.__setitem__("seconds", round(float(a), 2)), self._populate_steps_list()),
                     )
 
+    # ------------------------------------------------------------------
+    # Step Operations & Presets
+    # ------------------------------------------------------------------
+
     def _on_select_step(self, idx: int) -> None:
         self.selected_step_idx = idx
         self._populate_steps_list()
@@ -672,7 +692,7 @@ class AutomationEditor:
             if new_action == "fullscreen" and "enabled" not in step:
                 step["enabled"] = True
             elif new_action == "load_pipeline" and "path" not in step:
-                step["path"] = ""
+                step["path"] = "/layouts/Radial_Counter.json"
             elif new_action == "apply_view" and "view_name" not in step:
                 step["view_name"] = "default"
             elif new_action == "send_command":
@@ -779,6 +799,10 @@ class AutomationEditor:
             self._populate_steps_list()
             self._populate_step_details()
 
+    # ------------------------------------------------------------------
+    # TAB 2: Raw JSON
+    # ------------------------------------------------------------------
+
     def _build_json_tab(self) -> None:
         """Raw JSON editing tab with format validation and live synchronization."""
         s = display_scaling.scale
@@ -860,6 +884,10 @@ class AutomationEditor:
         if dpg.does_item_exist(status_tag):
             dpg.set_value(status_tag, self.json_status)
             dpg.configure_item(status_tag, color=self.json_status_color)
+
+    # ------------------------------------------------------------------
+    # Top & Bottom Bar Callbacks
+    # ------------------------------------------------------------------
 
     def _on_select_script_combo(self, chosen_name: str, file_map: Dict[str, str]) -> None:
         if chosen_name in file_map:

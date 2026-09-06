@@ -97,3 +97,9 @@ class _LinkInNode:
     def close(self) -> None:
         self._unsubscribe()
 
+
+# Re-export built-in Gate proxy
+from core.node_gate import _GateNode
+
+__all__ = ["_LinkOutNode", "_LinkInNode", "_GateNode"]
+

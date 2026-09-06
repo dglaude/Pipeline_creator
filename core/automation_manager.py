@@ -202,6 +202,9 @@ class AutomationManager:
     def set_workspace(self, step: Dict[str, Any]) -> None:
         """
         Set the working directory (CWD) of the application.
+
+        Args:
+            step: Dict containing the 'path' parameter.
         """
         path = step.get("path")
         if path:
@@ -210,6 +213,9 @@ class AutomationManager:
     def load_pipeline(self, step: Dict[str, Any]) -> None:
         """
         Load a pipeline flow layout file (.json) and reconstruct its node graph.
+
+        Args:
+            step: Dict containing the 'path' to the pipeline file.
         """
         path = step.get("path")
         if not path:
@@ -250,6 +256,9 @@ class AutomationManager:
     def apply_view(self, step: Dict[str, Any]) -> None:
         """
         Apply a saved named view layout preset.
+
+        Args:
+            step: Dict containing the 'view_name' to apply.
         """
         view_name = step.get("view_name")
         if not view_name:
@@ -265,6 +274,9 @@ class AutomationManager:
     def fullscreen(self, step: Dict[str, Any]) -> None:
         """
         Maximize the application viewport to fullscreen.
+
+        Args:
+            step: Dict containing the 'enabled' boolean flag.
         """
         enabled = step.get("enabled", True)
         if enabled:
@@ -274,6 +286,10 @@ class AutomationManager:
     def trigger(self, step: Dict[str, Any]) -> None:
         """
         Call a method on a target module instance.
+
+        Args:
+            step: Dict containing target identifiers ('module_type' or 'module_uuid'),
+                  the 'method' name to call, and 'params' dictionary of arguments.
         """
         module_uuid = step.get("module_uuid")
         target_module = None
@@ -308,6 +324,9 @@ class AutomationManager:
     def wait(self, step: Dict[str, Any]) -> None:
         """
         Introduce a delay (sleep) in the execution thread.
+
+        Args:
+            step: Dict containing the 'seconds' parameter specifying wait duration.
         """
         seconds = step.get("seconds", 1.0)
         time.sleep(seconds)

@@ -6,6 +6,7 @@ Stores user session metadata.
 from __future__ import annotations
 from dataclasses import dataclass
 
+
 @dataclass
 class AppState:
     """Flat session-state container for user session data."""
