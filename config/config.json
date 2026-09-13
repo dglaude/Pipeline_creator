@@ -12,7 +12,7 @@
         "thickness": 2
     },
     "Icon": {
-        "path": "ressources/icon.ico"
+        "path": "ressources/Icon.ico"
     },
     "Login": {
         "enabled": false,
